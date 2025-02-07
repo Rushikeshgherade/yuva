@@ -29,6 +29,9 @@ try {
     console.log("Error:",error)
     
 }
+app.get("/",(req,res) => {
+  res.send("Hello Word")
+});
 
 app.use("/settelment",addSettelment)
 app.listen(PORT, () => {
