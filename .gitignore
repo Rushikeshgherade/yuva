@@ -1,0 +1,31 @@
+# Dependency directories
+node_modules/
+
+Api/Backend/                                                
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+*.log
+
+# Build files
+build/
+dist/
+
+# IDE/Editor files
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Debug files
+*.debug
+
+# Optional: Ignore specific files or directories
+# Example: Ignore a specific folder
+# /your-folder-name/                                                                                                                                                                            Backend/Api/settelment-webpage-new.json
+Backend/Api/settelment-webpage-new-cfbfa73b628f.json
