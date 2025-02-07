@@ -8,7 +8,7 @@ const app = express()
 // Configure CORS to allow requests from your frontend domain
 app.use(
     cors({
-      origin: "https://settelment-form-wcvt-rushikesh-gherades-projects.vercel.app", // Replace with your frontend URL
+      origin: "https://yuva-seven.vercel.app", // Replace with your frontend URL
       methods: ["GET", "POST", "PUT", "DELETE"], // Allowed methods
       credentials: true, // Include cookies if needed
     })
