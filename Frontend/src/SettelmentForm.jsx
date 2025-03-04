@@ -33,13 +33,14 @@ function SettelmentForm() {
     receivable: "0",
   });
   const [isMultiDay, setIsMultiDay] = useState(false); // State for checkbox
+  const [files, setFiles] = useState([]);
+
     const navigate = useNavigate();
-    const [files, setFiles] = useState([]);
 
     const handleChange = (e) => { 
       const { name, value } = e.target;
         setFormData((prevFormData) => {
-          const updatedFormData = {
+          const updatedFormData = {                         
             ...prevFormData,
             [name]: value,
           };
@@ -89,11 +90,14 @@ function SettelmentForm() {
           "Content-Type": "multipart/form-data" ,
           },
       });
+
       console.log("Settelment added Succesfully",response.data);
 
-      navigate("/thanks",{state: {Data:formData }});
+      navigate("/thanks", { state: { Data: formData,  pdfFileId: response.data.pdfFileId, } });
+
+
     } catch (error) {
-      console.error("Error:"+error.response.data.message); // You can also show an error message to the user here
+      console.error("Error:" + error.response?.data?.message); // You can also show an error message to the user here
     }
 }
   return (
@@ -446,8 +450,7 @@ function SettelmentForm() {
        
       </div>
         </form>
-
-        </div>
+       </div>
     </div>
   )
 }

@@ -23,7 +23,7 @@ const formSchema = mongoose.Schema({
     },
     project:{
         type:String,
-        required:true
+        required:true 
     },
     prjCode:{
         type:String,
@@ -36,6 +36,9 @@ const formSchema = mongoose.Schema({
     dateProg:{
         type:String,
         required:true
+    },
+    ToDate:{
+        type:String,
     },
     progTitle:{
         type:String,

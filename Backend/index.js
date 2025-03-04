@@ -3,16 +3,11 @@ import dotenv from 'dotenv'
 import mongoose from 'mongoose'
 import cors from 'cors'
 import addSettelment from "./route/stl.js"
+import { downloadPDF } from "./controller/settelment.controller.js"
 
 const app = express()
 // Configure CORS to allow requests from your frontend domain
-app.use(
-    cors({
-      origin: "https://yuva-seven.vercel.app", // Replace with your frontend URL
-      methods: ["GET", "POST", "PUT", "DELETE"], // Allowed methods
-      credentials: true, // Include cookies if needed
-    })
-  );
+app.use(cors());
 app.use(express.json());
 dotenv.config()
 
@@ -34,6 +29,7 @@ app.get("/",(req,res) => {
 });
 
 app.use("/settelment",addSettelment)
+app.use("/pdf",downloadPDF)
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`)
 })
