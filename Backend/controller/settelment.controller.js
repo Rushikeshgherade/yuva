@@ -9,13 +9,17 @@ import path from 'path';
 // Authenticate with Google APIsfrontend
 const authenticateGoogle = async () => {
   try {
-    return new google.auth.GoogleAuth({
-      keyFile: JSON.parse(process.env.GOOGLE_CREDENTIALS),
+    const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+
+    const auth = new google.auth.GoogleAuth({
+      credentials: credentials, // Use `credentials` instead of `keyFile`
       scopes: [
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive",
       ],
-    });   
+    });
+
+    return auth;   
   } catch (error) {
     console.error('Error authenticating with Google:', error);
     throw new Error('Google authentication failed');
