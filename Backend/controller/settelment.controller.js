@@ -9,15 +9,30 @@ import path from 'path';
 // Authenticate with Google APIsfrontend
 const authenticateGoogle = async () => {
   try {
-    const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+    const googleCredentials = process.env.GOOGLE_CREDENTIALS;
+    console.log("GOOGLE_CREDENTIALS:", googleCredentials); // Debugging line
+
+    if (!googleCredentials) {
+      throw new Error("Google credentials environment variable is not set.");
+    }
+
+    const credentials = JSON.parse(googleCredentials); // Parse the JSON string
+    console.log("Parsed Credentials:", credentials); // Debugging line
 
     const auth = new google.auth.GoogleAuth({
-      credentials: credentials, // Use `credentials` instead of `keyFile`
+      credentials: credentials, // Use the parsed JSON object
       scopes: [
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive",
       ],
     });
+
+    return auth;
+  } catch (error) {
+    console.error('Error authenticating with Google:', error);
+    throw new Error('Google authentication failed');
+  }
+};
 
     return auth;   
   } catch (error) {
