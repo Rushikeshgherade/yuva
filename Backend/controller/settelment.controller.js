@@ -10,7 +10,7 @@ import path from 'path';
 const authenticateGoogle = async () => {
   try {
     return new google.auth.GoogleAuth({
-      keyFile: './Api/settelment-webpage-new-cfbfa73b628f.json',
+      keyFile: JSON.parse(process.env.GOOGLE_CREDENTIALS),
       scopes: [
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive",
