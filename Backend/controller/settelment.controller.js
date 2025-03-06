@@ -21,6 +21,9 @@ const authenticateGoogle = async () => {
     const credentials = JSON.parse(googleCredentials); // Parse the JSON string
     console.log("Parsed Credentials:", credentials); // Debugging line
 
+    // Log the private_key to verify it's correct
+    console.log("Private Key:", credentials.private_key);
+
     // Create a JWT client using the credentials
     const authClient = new JWT({
       email: credentials.client_email,
