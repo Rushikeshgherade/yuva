@@ -7,7 +7,6 @@ import fs from 'fs';
 import path from 'path';
 
 // Authenticate with Google APIsfrontend
-
 const authenticateGoogle = async () => {
   try {
     const googleCredentials = process.env.GOOGLE_CREDENTIALS;
@@ -20,19 +19,25 @@ const authenticateGoogle = async () => {
     const credentials = JSON.parse(googleCredentials); // Parse the JSON string
     console.log("Parsed Credentials:", credentials); // Debugging line
 
-    const auth = google.auth.fromJSON(credentials); // Use fromJSON instead of credentials
-    auth.scopes = [
-      "https://www.googleapis.com/auth/spreadsheets",
-      "https://www.googleapis.com/auth/drive",
-    ];
+    // Create an auth client using the credentials
+    const auth = new google.auth.GoogleAuth({
+      credentials: credentials,
+      scopes: [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive",
+      ],
+    });
 
-    return auth;
+    // Get the auth client
+    const authClient = await auth.getClient();
+
+    // Return the auth client
+    return authClient;
   } catch (error) {
     console.error('Error authenticating with Google:', error);
     throw new Error('Google authentication failed');
   }
 };
-
 
 // Endpoint to download the generated PDF
 export const downloadPDF = async (req, res) => {
@@ -44,15 +49,15 @@ export const downloadPDF = async (req, res) => {
   }
 
   try {
-    const auth = await authenticateGoogle();
-    const drive = google.drive({ version: 'v3', auth });
+    const authClient = await authenticateGoogle();
+    const drive = google.drive({ version: 'v3', auth: authClient });
 
     // Get the file metadata
     const fileMetadata = await drive.files.get({
       fileId,
       fields: 'name',
     });
-    
+
     // Stream the file from Google Drive
     const fileStream = await drive.files.get(
       { fileId, alt: 'media' },
@@ -73,7 +78,7 @@ export const downloadPDF = async (req, res) => {
 
 
 // Function to generate PDF
-const generatePDF = async (data, auth, projectName, personName, parentFolderId) => {
+const generatePDF = async (data, authClient, projectName, personName, parentFolderId) => {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument();
     const fileName = `./pdfs/${data.name}_settlement_${Date.now()}.pdf`;
@@ -350,8 +355,8 @@ const upload = multer({ storage });
 const handleFileUpload = upload.array('files');  
 
 // Check if folder exists and create it if not
-const getOrCreateSubFolder = async (auth, folderName, parentFolderId) => {
-  const drive = google.drive({ version: 'v3', auth });
+const getOrCreateSubFolder = async (authClient, folderName, parentFolderId) => {
+  const drive = google.drive({ version: 'v3', auth: authClient });
 
   // Search for an existing folder with the given name in the parent folder
   const res = await drive.files.list({
@@ -381,14 +386,14 @@ const getOrCreateSubFolder = async (auth, folderName, parentFolderId) => {
 
 // Upload multiple files to Google Drive in parallel
 // Upload files with folder structure: project > person name
-const uploadFilesToDriveWithStructure = async (auth, files, projectName, personName, parentFolderId) => {
-  const drive = google.drive({ version: 'v3', auth });
+const uploadFilesToDriveWithStructure = async (authClient, files, projectName, personName, parentFolderId) => {
+  const drive = google.drive({ version: 'v3', auth: authClient });
 
   // Get or create the project folder
-  const projectFolderId = await getOrCreateSubFolder(auth, projectName, parentFolderId);
+  const projectFolderId = await getOrCreateSubFolder(authClient, projectName, parentFolderId);
 
   // Get or create the person's folder within the project folder
-  const personFolderId = await getOrCreateSubFolder(auth, personName, projectFolderId);
+  const personFolderId = await getOrCreateSubFolder(authClient, personName, projectFolderId);
 
   // Upload files to the person's folder
   const uploadPromises = files.map(file => {                                                                                                                                  
@@ -414,8 +419,8 @@ const uploadFilesToDriveWithStructure = async (auth, files, projectName, personN
 
 // Append data to Google Sheets
 const appendToGoogleSheet = async (data) => {
-  const auth = await authenticateGoogle();
-  const sheets = google.sheets({ version: "v4", auth });
+  const authClient = await authenticateGoogle();
+  const sheets = google.sheets({ version: "v4", auth: authClient });
 
   const spreadsheetId = "1r0hlNxm7PxDDIIkvXchBsY9q6gcd0yhLpImWJ8hWHsU";
   const range = "Sheet1!A2"; // Append data below the header row
