@@ -7,7 +7,6 @@ import fs from 'fs';
 import path from 'path';
 
 // Authenticate with Google APIsfrontend
-const { google } = require('google-auth-library');
 
 const authenticateGoogle = async () => {
   try {
