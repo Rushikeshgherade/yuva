@@ -34,12 +34,6 @@ const authenticateGoogle = async () => {
   }
 };
 
-    return auth;   
-  } catch (error) {
-    console.error('Error authenticating with Google:', error);
-    throw new Error('Google authentication failed');
-  }
-};
 
 
 // Endpoint to download the generated PDF
