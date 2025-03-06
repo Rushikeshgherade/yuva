@@ -5,8 +5,10 @@ import { Readable } from "stream";
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
+import { JWT } from "google-auth-library";
 
 // Authenticate with Google APIsfrontend
+
 const authenticateGoogle = async () => {
   try {
     const googleCredentials = process.env.GOOGLE_CREDENTIALS;
@@ -19,19 +21,19 @@ const authenticateGoogle = async () => {
     const credentials = JSON.parse(googleCredentials); // Parse the JSON string
     console.log("Parsed Credentials:", credentials); // Debugging line
 
-    // Create an auth client using the credentials
-    const auth = new google.auth.GoogleAuth({
-      credentials: credentials,
+    // Create a JWT client using the credentials
+    const authClient = new JWT({
+      email: credentials.client_email,
+      key: credentials.private_key,
       scopes: [
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive",
       ],
     });
 
-    // Get the auth client
-    const authClient = await auth.getClient();
+    // Authenticate the client
+    await authClient.authorize();
 
-    // Return the auth client
     return authClient;
   } catch (error) {
     console.error('Error authenticating with Google:', error);
@@ -76,7 +78,6 @@ export const downloadPDF = async (req, res) => {
   }
 };
 
-
 // Function to generate PDF
 const generatePDF = async (data, authClient, projectName, personName, parentFolderId) => {
   return new Promise((resolve, reject) => {
@@ -90,222 +91,221 @@ const generatePDF = async (data, authClient, projectName, personName, parentFold
 
     const writeStream = fs.createWriteStream(fileName);
     doc.pipe(writeStream);
+      // Add Logo (Image)
+      doc.image('./media/yuvalogo.png', 50, 50, { width: 80 }); // Adjust path and dimensions
+      doc.moveDown();
 
-    // Add Logo (Image)
-    doc.image('./media/yuvalogo.png', 50, 50, { width: 80 }); // Adjust path and dimensions
-    doc.moveDown();
-
-    // Add Header
-    doc
-      .fontSize(16)
-      .font('Helvetica-Bold')
-      .fillColor('#FF4C4C') // Red color for header
-      .text('YOUTH FOR UNITY AND VOLUNTARY ACTION', 130, 80, { align: 'center' }) // Centered at x=130, y=80
-      .fontSize(12)
-      .fillColor('#000000') // Black color for address
-      .text('Yuva Centre, Plot No. 23, Sector 7, Kharghar, Navi Mumbai - 4102010', 120, 100, { align: 'center' }) // Centered at x=120, y=100
-      .moveDown();
+      // Add Header
+      doc
+        .fontSize(16)
+        .font('Helvetica-Bold')
+        .fillColor('#FF4C4C') // Red color for header
+        .text('YOUTH FOR UNITY AND VOLUNTARY ACTION', 130, 80, { align: 'center' }) // Centered at x=130, y=80
+        .fontSize(12)
+        .fillColor('#000000') // Black color for address
+        .text('Yuva Centre, Plot No. 23, Sector 7, Kharghar, Navi Mumbai - 4102010', 120, 100, { align: 'center' }) // Centered at x=120, y=100
+        .moveDown();
 
 
-    // Add Title
-    doc
-      .fontSize(18)
-      .font('Helvetica-Bold')
-      .fillColor('#000080') // Navy blue color for title
-      .text('EXPENDITURE SETTLEMENT SHEET', 50, 150, { align: 'center', underline: true }) // Centered at x=50, y=150
-      .moveDown();
+      // Add Title
+      doc
+        .fontSize(18)
+        .font('Helvetica-Bold')
+        .fillColor('#000080') // Navy blue color for title
+        .text('EXPENDITURE SETTLEMENT SHEET', 50, 150, { align: 'center', underline: true }) // Centered at x=50, y=150
+        .moveDown();
 
-    // Add Person Name and Advance Settlement Date
-    const startY = 190; // Starting Y position for details
-    doc
-      .fontSize(12)
-      .fillColor('#000000') // Black color for text
-      .font('Helvetica-Bold') // Set bold font for labels
-      .text('Person Name:', 50, startY) // Label in bold
-      .font('Helvetica') // Switch back to regular font for the answer
-      .text(`${data.name}`, 150, startY) // Answer in regular font
-      .font('Helvetica-Bold') // Set bold font for the next label
-      .text('Advance Settlement Date:', 280, startY) // Label in bold
-      .font('Helvetica') // Switch back to regular font for the answer
-      .text(`${data.advSetlDate}`, 450, startY) // Answer in regular font
-      .moveDown();
+      // Add Person Name and Advance Settlement Date
+      const startY = 190; // Starting Y position for details
+      doc
+        .fontSize(12)
+        .fillColor('#000000') // Black color for text
+        .font('Helvetica-Bold') // Set bold font for labels
+        .text('Person Name:', 50, startY) // Label in bold
+        .font('Helvetica') // Switch back to regular font for the answer
+        .text(`${data.name}`, 150, startY) // Answer in regular font
+        .font('Helvetica-Bold') // Set bold font for the next label
+        .text('Advance Settlement Date:', 280, startY) // Label in bold
+        .font('Helvetica') // Switch back to regular font for the answer
+        .text(`${data.advSetlDate}`, 450, startY) // Answer in regular font
+        .moveDown();
 
-    // Add Region / City / Area and Project
-    doc
-      .fontSize(12)
-      .fillColor('#000000') // Black color for text
-      .font('Helvetica-Bold') // Set bold font for labels
-      .text('Region / City / Area:', 50, startY + 30) // Label in bold
-      .font('Helvetica') // Switch back to regular font for the answer
-      .text(`${data.area}`, 180, startY + 30) // Answer in regular font
-      .font('Helvetica-Bold') // Set bold font for the next label
-      .text('Project:', 280, startY + 30) // Label in bold
-      .font('Helvetica') // Switch back to regular font for the answer
-      .text(`${data.project}`, 350, startY + 30) // Answer in regular font
-      .moveDown();
+      // Add Region / City / Area and Project
+      doc
+        .fontSize(12)
+        .fillColor('#000000') // Black color for text
+        .font('Helvetica-Bold') // Set bold font for labels
+        .text('Region / City / Area:', 50, startY + 30) // Label in bold
+        .font('Helvetica') // Switch back to regular font for the answer
+        .text(`${data.area}`, 180, startY + 30) // Answer in regular font
+        .font('Helvetica-Bold') // Set bold font for the next label
+        .text('Project:', 280, startY + 30) // Label in bold
+        .font('Helvetica') // Switch back to regular font for the answer
+        .text(`${data.project}`, 350, startY + 30) // Answer in regular font
+        .moveDown();
 
-    // Add Place Of Program and Project Code
-    doc
-      .fontSize(12)
-      .fillColor('#000000') // Black color for text
-      .font('Helvetica-Bold') // Set bold font for labels
-      .text('Place Of Program:', 50, startY + 60) // Label in bold
-      .font('Helvetica') // Switch back to regular font for the answer
-      .text(`${data.placeProg}`, 180, startY + 60) // Answer in regular font
-      .font('Helvetica-Bold') // Set bold font for the next label
-      .text('Project Code:', 280, startY + 60) // Label in bold
-      .font('Helvetica') // Switch back to regular font for the answer
-      .text(`${data.prjCode}`, 380, startY + 60) // Answer in regular font
-      .moveDown();
+      // Add Place Of Program and Project Code
+      doc
+        .fontSize(12)
+        .fillColor('#000000') // Black color for text
+        .font('Helvetica-Bold') // Set bold font for labels
+        .text('Place Of Program:', 50, startY + 60) // Label in bold
+        .font('Helvetica') // Switch back to regular font for the answer
+        .text(`${data.placeProg}`, 180, startY + 60) // Answer in regular font
+        .font('Helvetica-Bold') // Set bold font for the next label
+        .text('Project Code:', 280, startY + 60) // Label in bold
+        .font('Helvetica') // Switch back to regular font for the answer
+        .text(`${data.prjCode}`, 380, startY + 60) // Answer in regular font
+        .moveDown();
 
-    // Add Date Of Program and Date Of Program (To)
-    doc
-      .fontSize(12)
-      .fillColor('#000000') // Black color for text
-      .font('Helvetica-Bold') // Set bold font for labels
-      .text('Date Of Program (From):', 50, startY + 90) // Label in bold
-      .font('Helvetica') // Switch back to regular font for the answer
-      .text(`${data.dateProg}`, 200, startY + 90) // Answer in regular font
-      .font('Helvetica-Bold') // Set bold font for the next label
-      .text('Date Of Program (To):', 280, startY + 90) // Label in bold
-      .font('Helvetica') // Switch back to regular font for the answer
-      .text(`${data.ToDate}`, 410, startY + 90) // Answer in regular font
-      .moveDown();
+      // Add Date Of Program and Date Of Program (To)
+      doc
+        .fontSize(12)
+        .fillColor('#000000') // Black color for text
+        .font('Helvetica-Bold') // Set bold font for labels
+        .text('Date Of Program (From):', 50, startY + 90) // Label in bold
+        .font('Helvetica') // Switch back to regular font for the answer
+        .text(`${data.dateProg}`, 200, startY + 90) // Answer in regular font
+        .font('Helvetica-Bold') // Set bold font for the next label
+        .text('Date Of Program (To):', 280, startY + 90) // Label in bold
+        .font('Helvetica') // Switch back to regular font for the answer
+        .text(`${data.ToDate}`, 410, startY + 90) // Answer in regular font
+        .moveDown();
 
-    // Add Coversheet Number and Program Title
-    doc
-      .fontSize(12)
-      .fillColor('#000000') // Black color for text
-      .font('Helvetica-Bold') // Set bold font for labels
-      .text('Coversheet Number:', 50, startY + 120) // Label in bold
-      .font('Helvetica') // Switch back to regular font for the answer
-      .text(`${data.coversheet}`, 180, startY + 120) // Answer in regular font
-      .font('Helvetica-Bold') // Set bold font for the next label
-      .text('Program Title:', 280, startY + 120) // Label in bold
-      .font('Helvetica') // Switch back to regular font for the answer
-      .text(`${data.progTitle}`, 380, startY + 120) // Answer in regular font
-      .moveDown();
+      // Add Coversheet Number and Program Title
+      doc
+        .fontSize(12)
+        .fillColor('#000000') // Black color for text
+        .font('Helvetica-Bold') // Set bold font for labels
+        .text('Coversheet Number:', 50, startY + 120) // Label in bold
+        .font('Helvetica') // Switch back to regular font for the answer
+        .text(`${data.coversheet}`, 180, startY + 120) // Answer in regular font
+        .font('Helvetica-Bold') // Set bold font for the next label
+        .text('Program Title:', 280, startY + 120) // Label in bold
+        .font('Helvetica') // Switch back to regular font for the answer
+        .text(`${data.progTitle}`, 380, startY + 120) // Answer in regular font
+        .moveDown();
 
-    // Add Short Note About Program
-    doc
-      .fontSize(12)
-      .font('Helvetica-Bold')
-      .text('Short Note About Program:', 50, startY + 150) // Label in bold
-      .font('Helvetica') // Switch back to regular font for the answer
-      .text(data.summary, 50, startY + 170, { width: 500 }) // Answer in regular font
-      .moveDown();
+      // Add Short Note About Program
+      doc
+        .fontSize(12)
+        .font('Helvetica-Bold')
+        .text('Short Note About Program:', 50, startY + 150) // Label in bold
+        .font('Helvetica') // Switch back to regular font for the answer
+        .text(data.summary, 50, startY + 170, { width: 500 }) // Answer in regular font
+        .moveDown();
 
-    // Add Expenses Summary Title
-    doc
-      .fontSize(14)
-      .font('Helvetica-Bold')
-      .fillColor('#000080') // Navy blue color for title
-      .text('Expenses Summary', 50, startY + 220, { underline: true }) // Centered at x=50, y=220
-      .moveDown();
+      // Add Expenses Summary Title
+      doc
+        .fontSize(14)
+        .font('Helvetica-Bold')
+        .fillColor('#000080') // Navy blue color for title
+        .text('Expenses Summary', 50, startY + 220, { underline: true }) // Centered at x=50, y=220
+        .moveDown();
 
-    // Add Expenses Table with Grid and Borders
-    const tableStartX = 50; // Starting X position for the table
-    const tableStartY = startY + 250; // Starting Y position for the table
-    const columnWidth = 120; // Width of each column
-    const rowHeight = 20; // Height of each row
-    const padding = 5; // Padding inside each cell
+      // Add Expenses Table with Grid and Borders
+      const tableStartX = 50; // Starting X position for the table
+      const tableStartY = startY + 250; // Starting Y position for the table
+      const columnWidth = 120; // Width of each column
+      const rowHeight = 20; // Height of each row
+      const padding = 5; // Padding inside each cell
 
-    // Function to draw a cell with borders and aligned text
-    const drawCell = (text, x, y, width, height, align = 'left') => {
-      // Draw cell border
-      doc.rect(x, y, width, height).stroke();
+      // Function to draw a cell with borders and aligned text
+      const drawCell = (text, x, y, width, height, align = 'left') => {
+        // Draw cell border
+        doc.rect(x, y, width, height).stroke();
 
-      // Add text with padding and alignment
+        // Add text with padding and alignment
+        doc
+          .fontSize(12)
+          .font('Helvetica')
+          .fillColor('#000000') // Black color for text
+          .text(text, x + padding, y + padding, {
+            width: width - 2 * padding,
+            height: height - 2 * padding,
+            align: align,
+          });
+      };
+
+      // Draw Table Headers
+      doc.font('Helvetica-Bold').fillColor('#000000'); // Bold and black for headers
+      drawCell('Food', tableStartX, tableStartY, columnWidth, rowHeight, 'center');
+      drawCell('Travel', tableStartX + columnWidth, tableStartY, columnWidth, rowHeight, 'center');
+      drawCell('Stationery', tableStartX + 2 * columnWidth, tableStartY, columnWidth, rowHeight, 'center');
+      drawCell('Printing', tableStartX + 3 * columnWidth, tableStartY, columnWidth, rowHeight, 'center');
+
+      // Draw Table Values
+      doc.font('Helvetica').fillColor('#000000'); // Regular font for values
+      drawCell(`${data.food}`, tableStartX, tableStartY + rowHeight, columnWidth, rowHeight, 'right');
+      drawCell(`${data.travel}`, tableStartX + columnWidth, tableStartY + rowHeight, columnWidth, rowHeight, 'right');
+      drawCell(`${data.stationery}`, tableStartX + 2 * columnWidth, tableStartY + rowHeight, columnWidth, rowHeight, 'right');
+      drawCell(`${data.printing}`, tableStartX + 3 * columnWidth, tableStartY + rowHeight, columnWidth, rowHeight, 'right');
+
+      // Second Row of Expenses (Headers)
+      doc.font('Helvetica-Bold').fillColor('#000000'); // Bold and black for headers
+      drawCell('Accommodation', tableStartX, tableStartY + 2 * rowHeight, columnWidth, rowHeight, 'center');
+      drawCell('Communication', tableStartX + columnWidth, tableStartY + 2 * rowHeight, columnWidth, rowHeight, 'center');
+      drawCell('Resource Person', tableStartX + 2 * columnWidth, tableStartY + 2 * rowHeight, columnWidth, rowHeight, 'center');
+      drawCell('Other', tableStartX + 3 * columnWidth, tableStartY + 2 * rowHeight, columnWidth, rowHeight, 'center');
+
+      // Second Row of Expenses (Values)
+      doc.font('Helvetica').fillColor('#000000'); // Regular font for values
+      drawCell(`${data.accom}`, tableStartX, tableStartY + 3 * rowHeight, columnWidth, rowHeight, 'right');
+      drawCell(`${data.communication}`, tableStartX + columnWidth, tableStartY + 3 * rowHeight, columnWidth, rowHeight, 'right');
+      drawCell(`${data.resource}`, tableStartX + 2 * columnWidth, tableStartY + 3 * rowHeight, columnWidth, rowHeight, 'right');
+      drawCell(`${data.other}`, tableStartX + 3 * columnWidth, tableStartY + 3 * rowHeight, columnWidth, rowHeight, 'right');
+
+      // Total Expenses
+      doc
+        .fontSize(14)
+        .font('Helvetica-Bold')
+        .fillColor('#000080') // Navy blue color for total
+        .text(`Total: ${data.total}`, tableStartX, tableStartY + 5 * rowHeight)
+        .moveDown();
+
+      // Total Expenses In Words
+      doc
+        .fontSize(12)
+        .font('Helvetica-Bold')
+        .text(`Total Expenses In Word: ${data.inword}`, tableStartX , tableStartY + 7 * rowHeight)
+        .moveDown();
+
+      // Individual Cost, Vendor Cost, Total Advance Taken, Receivable/Payable
       doc
         .fontSize(12)
         .font('Helvetica')
         .fillColor('#000000') // Black color for text
-        .text(text, x + padding, y + padding, {
-          width: width - 2 * padding,
-          height: height - 2 * padding,
-          align: align,
-        });
-    };
+        .text(`Individual Cost: ${data.individual}`, 50, tableStartY + 9 * rowHeight)
+        .text(`Vendor Cost: ${data.vendor}`, 250, tableStartY + 9 * rowHeight)
+        .moveDown();
 
-    // Draw Table Headers
-    doc.font('Helvetica-Bold').fillColor('#000000'); // Bold and black for headers
-    drawCell('Food', tableStartX, tableStartY, columnWidth, rowHeight, 'center');
-    drawCell('Travel', tableStartX + columnWidth, tableStartY, columnWidth, rowHeight, 'center');
-    drawCell('Stationery', tableStartX + 2 * columnWidth, tableStartY, columnWidth, rowHeight, 'center');
-    drawCell('Printing', tableStartX + 3 * columnWidth, tableStartY, columnWidth, rowHeight, 'center');
+      doc
+        .text(`Total Advance Taken: ${data.totalAdvTake}`, 50, tableStartY + 10 * rowHeight)
+        .moveDown();
 
-    // Draw Table Values
-    doc.font('Helvetica').fillColor('#000000'); // Regular font for values
-    drawCell(`${data.food}`, tableStartX, tableStartY + rowHeight, columnWidth, rowHeight, 'right');
-    drawCell(`${data.travel}`, tableStartX + columnWidth, tableStartY + rowHeight, columnWidth, rowHeight, 'right');
-    drawCell(`${data.stationery}`, tableStartX + 2 * columnWidth, tableStartY + rowHeight, columnWidth, rowHeight, 'right');
-    drawCell(`${data.printing}`, tableStartX + 3 * columnWidth, tableStartY + rowHeight, columnWidth, rowHeight, 'right');
+      doc
+        .text(`Receivable (-) / Payable (+): ${data.receivable}`, 50, tableStartY + 11 * rowHeight)
+        .moveDown();
 
-    // Second Row of Expenses (Headers)
-    doc.font('Helvetica-Bold').fillColor('#000000'); // Bold and black for headers
-    drawCell('Accommodation', tableStartX, tableStartY + 2 * rowHeight, columnWidth, rowHeight, 'center');
-    drawCell('Communication', tableStartX + columnWidth, tableStartY + 2 * rowHeight, columnWidth, rowHeight, 'center');
-    drawCell('Resource Person', tableStartX + 2 * columnWidth, tableStartY + 2 * rowHeight, columnWidth, rowHeight, 'center');
-    drawCell('Other', tableStartX + 3 * columnWidth, tableStartY + 2 * rowHeight, columnWidth, rowHeight, 'center');
-
-    // Second Row of Expenses (Values)
-    doc.font('Helvetica').fillColor('#000000'); // Regular font for values
-    drawCell(`${data.accom}`, tableStartX, tableStartY + 3 * rowHeight, columnWidth, rowHeight, 'right');
-    drawCell(`${data.communication}`, tableStartX + columnWidth, tableStartY + 3 * rowHeight, columnWidth, rowHeight, 'right');
-    drawCell(`${data.resource}`, tableStartX + 2 * columnWidth, tableStartY + 3 * rowHeight, columnWidth, rowHeight, 'right');
-    drawCell(`${data.other}`, tableStartX + 3 * columnWidth, tableStartY + 3 * rowHeight, columnWidth, rowHeight, 'right');
-
-    // Total Expenses
-    doc
-      .fontSize(14)
-      .font('Helvetica-Bold')
-      .fillColor('#000080') // Navy blue color for total
-      .text(`Total: ${data.total}`, tableStartX, tableStartY + 5 * rowHeight)
-      .moveDown();
-
-    // Total Expenses In Words
-    doc
-      .fontSize(12)
-      .font('Helvetica-Bold')
-      .text(`Total Expenses In Word: ${data.inword}`, tableStartX , tableStartY + 7 * rowHeight)
-      .moveDown();
-
-    // Individual Cost, Vendor Cost, Total Advance Taken, Receivable/Payable
-    doc
-      .fontSize(12)
-      .font('Helvetica')
-      .fillColor('#000000') // Black color for text
-      .text(`Individual Cost: ${data.individual}`, 50, tableStartY + 9 * rowHeight)
-      .text(`Vendor Cost: ${data.vendor}`, 250, tableStartY + 9 * rowHeight)
-      .moveDown();
-
-    doc
-      .text(`Total Advance Taken: ${data.totalAdvTake}`, 50, tableStartY + 10 * rowHeight)
-      .moveDown();
-
-    doc
-      .text(`Receivable (-) / Payable (+): ${data.receivable}`, 50, tableStartY + 11 * rowHeight)
-      .moveDown();
-
-    // Footer
-    doc
-      .fontSize(10)
-      .font('Helvetica-Oblique')
-      .fillColor('#808080') // Gray color for footer
-      .text('This is a system-generated document.', 50, tableStartY + 12 * rowHeight, { align: 'center' });
-
-    doc.end();
+      // Footer
+      doc
+        .fontSize(10)
+        .font('Helvetica-Oblique')
+        .fillColor('#808080') // Gray color for footer
+        .text('This is a system-generated document.', 50, tableStartY + 12 * rowHeight, { align: 'center' });
+        
+      doc.end();
 
     writeStream.on('finish', async () => {
       try {
         // Upload the generated PDF to Google Drive
-        const drive = google.drive({ version: 'v3', auth });
+        const drive = google.drive({ version: 'v3', auth: authClient });
 
         // Get or create the project folder
-        const projectFolderId = await getOrCreateSubFolder(auth, projectName, parentFolderId);
+        const projectFolderId = await getOrCreateSubFolder(authClient, projectName, parentFolderId);
 
         // Get or create the person's folder within the project folder
-        const personFolderId = await getOrCreateSubFolder(auth, personName, projectFolderId);
+        const personFolderId = await getOrCreateSubFolder(authClient, personName, projectFolderId);
 
         // Upload the PDF file to Google Drive
         const fileMetadata = {
@@ -396,7 +396,7 @@ const uploadFilesToDriveWithStructure = async (authClient, files, projectName, p
   const personFolderId = await getOrCreateSubFolder(authClient, personName, projectFolderId);
 
   // Upload files to the person's folder
-  const uploadPromises = files.map(file => {                                                                                                                                  
+  const uploadPromises = files.map(file => {
     const fileMetadata = {
       name: file.originalname,
       parents: [personFolderId],
@@ -500,7 +500,7 @@ export const addSettelment = async (req, res) => {
 
       // Generate PDF and upload it to Google Drive
       const pdfFileId = await generatePDF(savedSettlement, auth, project, name, parentFolderId);
-
+    
       // Google Sheets update
       await appendToGoogleSheet(savedSettlement);
 
