@@ -7,6 +7,8 @@ import fs from 'fs';
 import path from 'path';
 
 // Authenticate with Google APIsfrontend
+const { google } = require('google-auth-library');
+
 const authenticateGoogle = async () => {
   try {
     const googleCredentials = process.env.GOOGLE_CREDENTIALS;
@@ -19,13 +21,11 @@ const authenticateGoogle = async () => {
     const credentials = JSON.parse(googleCredentials); // Parse the JSON string
     console.log("Parsed Credentials:", credentials); // Debugging line
 
-    const auth = new google.auth.GoogleAuth({
-      credentials: credentials, // Use the parsed JSON object
-      scopes: [
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive",
-      ],
-    });
+    const auth = google.auth.fromJSON(credentials); // Use fromJSON instead of credentials
+    auth.scopes = [
+      "https://www.googleapis.com/auth/spreadsheets",
+      "https://www.googleapis.com/auth/drive",
+    ];
 
     return auth;
   } catch (error) {
@@ -33,7 +33,6 @@ const authenticateGoogle = async () => {
     throw new Error('Google authentication failed');
   }
 };
-
 
 
 // Endpoint to download the generated PDF
