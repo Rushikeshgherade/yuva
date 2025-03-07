@@ -8,7 +8,6 @@ import path from 'path';
 import { JWT } from "google-auth-library";
 
 // Authenticate with Google APIsfrontend
-
 const authenticateGoogle = async () => {
   try {
     const googleCredentials = process.env.GOOGLE_CREDENTIALS;
@@ -18,13 +17,11 @@ const authenticateGoogle = async () => {
       throw new Error("Google credentials environment variable is not set.");
     }
 
-    // Fix escaped characters in the JSON string
-    const fixedCredentials = googleCredentials
-      .replace(/\\\//g, '/') // Replace \/ with /
-      .replace(/\\n/g, '\n'); // Replace \\n with \n
+    // Step 1: Parse the outer JSON string to remove escaped characters
+    const unescapedCredentials = JSON.parse(googleCredentials);
 
-    // Parse the corrected JSON string
-    const credentials = JSON.parse(fixedCredentials);
+    // Step 2: Parse the inner JSON string to get the credentials object
+    const credentials = JSON.parse(unescapedCredentials);
     console.log("Parsed Credentials:", credentials); // Debugging line
 
     // Log the private_key to verify it's correct
