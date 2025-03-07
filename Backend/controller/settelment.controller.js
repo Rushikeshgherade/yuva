@@ -18,9 +18,13 @@ const authenticateGoogle = async () => {
       throw new Error("Google credentials environment variable is not set.");
     }
 
-    // Replace escaped newline characters with actual newlines
-    const formattedCredentials = googleCredentials.replace(/\\n/g, '\n');
-    const credentials = JSON.parse(formattedCredentials); // Parse the JSON string
+    // Fix escaped characters in the JSON string
+    const fixedCredentials = googleCredentials
+      .replace(/\\\//g, '/') // Replace \/ with /
+      .replace(/\\n/g, '\n'); // Replace \\n with \n
+
+    // Parse the corrected JSON string
+    const credentials = JSON.parse(fixedCredentials);
     console.log("Parsed Credentials:", credentials); // Debugging line
 
     // Log the private_key to verify it's correct
@@ -44,7 +48,7 @@ const authenticateGoogle = async () => {
     console.error('Error authenticating with Google:', error);
     throw new Error('Google authentication failed');
   }
-};;
+};
 
 // Endpoint to download the generated PDF
 export const downloadPDF = async (req, res) => {
