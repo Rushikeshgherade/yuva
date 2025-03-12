@@ -386,16 +386,6 @@ function SettelmentForm() {
         </div>
 
         <div className="mb-4 ">
-          <label htmlFor="individual" className="block text-sm font-medium text-gray-600">Expenses Incurred By Individual</label>
-          <input
-            type="number" id="individual"  name="individual" value={formData.individual} onChange={handleChange}  
-            className="mt-2 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter Your Amount"
-            required
-          />
-        </div>
-
-        <div className="mb-4 ">
           <label htmlFor="totalAdvTake" className="block text-sm font-medium text-gray-600">Total Advance Taken</label>
           <input
             type="number" id="totalAdvTake" name="totalAdvTake" value={formData.totalAdvTake} onChange={handleChange}  
@@ -405,6 +395,15 @@ function SettelmentForm() {
           />
         </div>
 
+        <div className="mb-4 ">
+          <label htmlFor="individual" className="block text-sm font-medium text-gray-600">Expenses Incurred By Individual</label>
+          <input
+            type="number" id="individual"  name="individual" value={formData.individual} onChange={handleChange}  
+            className="mt-2 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter Your Amount"
+            required
+          />
+        </div>
         
         <div className="mb-4 ">
           <label htmlFor="receivable" className="block text-sm font-medium text-gray-600">Receivable (-) / Payable (+)</label>
