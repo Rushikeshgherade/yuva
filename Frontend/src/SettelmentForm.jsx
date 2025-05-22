@@ -34,35 +34,64 @@ function SettelmentForm() {
   });
   const [isMultiDay, setIsMultiDay] = useState(false); // State for checkbox
   const [files, setFiles] = useState([]);
+  const [summaryError, setSummaryError] = useState('');
+  const [error, setError] = useState(null); // New error state
+  const [fieldErrors, setFieldErrors] = useState({}); // Add this for field-specific errors
 
     const navigate = useNavigate();
 
-    const handleChange = (e) => { 
+    const handleChange = (e) => {
       const { name, value } = e.target;
-        setFormData((prevFormData) => {
-          const updatedFormData = {                         
-            ...prevFormData,
-            [name]: value,
-          };
-
-          const expenseKeys = ['food', 'travel', 'stationery', 'printing', 'accom', 'communication', 'resource', 'other'];
-
-          if (expenseKeys.includes(name)) {
-            // Calculate the total sum of all relevant fields
-            updatedFormData.total = expenseKeys.reduce((sum, key) => {
-              return sum + parseFloat(updatedFormData[key] || 0);
-            }, 0);
-          }
-
-          // Calculate receivable/payable based on totalAdvanceTaken and individual expenses
-      if (name === "totalAdvTake" || name === "individual") {
-        updatedFormData.receivable = parseFloat(updatedFormData.totalAdvTake || 0) - parseFloat(updatedFormData.individual || 0);
+    
+      if (name === 'summary') {
+        const words = value.trim().split(/\s+/); // Split the input into words
+        if (words.length > 100) {
+          setSummaryError('Summary cannot exceed 100 words.');
+          return; // Stop further execution if word limit is exceeded
+        } else {
+          setSummaryError(''); // Clear the error message if the word count is valid
+        }
       }
-      
-          return updatedFormData;
-        });
-
+    
+      setFormData((prevFormData) => {
+        const updatedFormData = {
+          ...prevFormData,
+          [name]: value,
         };
+    
+        const expenseKeys = [
+          'food',
+          'travel',
+          'stationery',
+          'printing',
+          'accom',
+          'communication',
+          'resource',
+          'other',
+        ];
+    
+        // Calculate the total sum of all relevant fields
+        if (expenseKeys.includes(name)) {
+          updatedFormData.total = expenseKeys.reduce((sum, key) => {
+            return sum + parseFloat(updatedFormData[key] || 0);
+          }, 0);
+        }
+    
+        // Calculate individual expenses (total - vendor)
+        if (name === 'total' || name === 'vendor') {
+          updatedFormData.individual =
+            parseFloat(updatedFormData.total || 0) - parseFloat(updatedFormData.vendor || 0);
+        }
+    
+        // Calculate receivable/payable based on totalAdvTake and individual expenses
+        if (name === 'totalAdvTake' || name === 'individual') {
+          updatedFormData.receivable =
+            parseFloat(updatedFormData.totalAdvTake || 0) - parseFloat(updatedFormData.individual || 0);
+        }
+    
+        return updatedFormData;
+      });
+    };
 
         //handle file change
         const handleFileChange = (e) => {
@@ -71,6 +100,16 @@ function SettelmentForm() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError(null);
+        setFieldErrors({}); // Reset field errors on new submission
+
+            // Check if the summary exceeds 100 words before submitting
+    const words = formData.summary.trim().split(/\s+/);
+    if (words.length > 100) {
+      setSummaryError('Summary cannot exceed 100 words.');
+      return; // Stop submission if word limit is exceeded
+    }
+
         const formDataWithFile = new FormData();
 
         Object.entries(formData).forEach(([key, value]) => {
@@ -91,15 +130,29 @@ function SettelmentForm() {
           },
       });
 
-      console.log("Settelment added Succesfully",response.data);
-
       navigate("/thanks", { state: { Data: formData,  pdfFileId: response.data.pdfFileId, } });
 
 
     } catch (error) {
-      console.error("Error:" + error.response?.data?.message); // You can also show an error message to the user here
+      
+      console.error("Error:", error);
+
+      // Handle field-specific errors
+      if (error.response?.data?.fieldErrors) {
+        setFieldErrors(error.response.data.fieldErrors);
+        setError("Please fix the errors in the form");
+      } 
+      // Handle general errors
+      else {
+        const errorMessage = error.response?.data?.message || 
+                            error.response?.data?.error || 
+                            error.message || 
+                            "An unknown error occurred";
+        setError(errorMessage);
+      }
     }
 }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F3FEB8] px-3 py-5 ">
         <div className=" bg-transparent border bg-yellow-400 p-4 md:p-8 rounded-lg shadow-xl w-[800px]">
@@ -113,6 +166,18 @@ function SettelmentForm() {
         </div>  
 
         <hr className="border-t-2 border-white my-4" />
+        {error && (
+          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded relative">
+            <button 
+              onClick={() => setError(null)}
+              className="absolute top-1 right-1 text-red-700 hover:text-red-900"
+            >
+              ×
+            </button>
+            <p className="font-bold">Error:</p>
+            <p>{error}</p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}  >
         <div className=' md:grid grid-cols-2 gap-4'>
@@ -257,12 +322,21 @@ function SettelmentForm() {
             </div>
 
             <div className="mb-6 ">
-          <label htmlFor="summary" className="block text-sm font-medium text-gray-600">Short Note About Program</label>
-         
-          <textarea id="summary" name="summary" value={formData.summary} onChange={handleChange}
-          className="mt-2 block w-full h-40 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          required></textarea>
-        </div>
+            <label htmlFor="summary" className="block text-sm font-medium text-gray-600">
+              Short Note About Program
+            </label>
+            <textarea
+              id="summary"
+              name="summary"
+              value={formData.summary}
+              onChange={handleChange}
+              className="mt-2 block w-full h-40 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            ></textarea>
+            {summaryError && (
+              <p className="text-red-500 text-sm mt-2">{summaryError}</p>
+            )}
+          </div>
 
         
         <h2 className="text-2xl font-bold font text-left text-[#FF4C4C]  mb-0">Expenses Summary</h2>
@@ -386,6 +460,23 @@ function SettelmentForm() {
         </div>
 
         <div className="mb-4 ">
+          <label 
+          htmlFor="individual" 
+          className="block text-sm font-medium text-gray-600">Expenses Incurred By Individual</label>
+          <input
+            type="number" 
+            id="individual"  
+            name="individual" 
+            value={formData.individual} 
+            onChange={handleChange}  
+            className="mt-2 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter Your Amount"
+            readOnly 
+            required
+          />
+        </div>
+
+        <div className="mb-4 ">
           <label htmlFor="totalAdvTake" className="block text-sm font-medium text-gray-600">Total Advance Taken</label>
           <input
             type="number" id="totalAdvTake" name="totalAdvTake" value={formData.totalAdvTake} onChange={handleChange}  
@@ -395,15 +486,6 @@ function SettelmentForm() {
           />
         </div>
 
-        <div className="mb-4 ">
-          <label htmlFor="individual" className="block text-sm font-medium text-gray-600">Expenses Incurred By Individual</label>
-          <input
-            type="number" id="individual"  name="individual" value={formData.individual} onChange={handleChange}  
-            className="mt-2 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter Your Amount"
-            required
-          />
-        </div>
         
         <div className="mb-4 ">
           <label htmlFor="receivable" className="block text-sm font-medium text-gray-600">Receivable (-) / Payable (+)</label>
@@ -429,7 +511,12 @@ function SettelmentForm() {
         </div>
         </div>
         
-        
+        {error && (
+        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+          <p className="font-bold">Error:</p>
+          <p>{error}</p>
+        </div>
+      )}
         
         <div className=' grid grid-cols-2 gap-4'>
       <button
