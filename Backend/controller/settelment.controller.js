@@ -136,7 +136,7 @@ const generatePDF = async (data, authClient, projectName, personName, parentFold
       .fontSize(16)
       .font('Helvetica-Bold')
       .fillColor('#000080') // Navy blue color for title
-      .text('EXPENDITURE SETTLEMENT SHEET', 50, 130, { align: 'center', underline: true }) // Centered at x=50, y=150
+      .text('EXPENDITURE SETTLEMENT FORM', 50, 130, { align: 'center', underline: true }) // Centered at x=50, y=150
       .moveDown();
 
     // Add Person Name and Advance Settlement Date

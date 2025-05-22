@@ -37,6 +37,8 @@ function SettelmentForm() {
   const [summaryError, setSummaryError] = useState('');
   const [error, setError] = useState(null); // New error state
   const [fieldErrors, setFieldErrors] = useState({}); // Add this for field-specific errors
+  const [submitting, setSubmitting] = useState(false);
+
 
     const navigate = useNavigate();
 
@@ -100,6 +102,8 @@ function SettelmentForm() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (submitting) return; // prevent multiple submissions
+        setSubmitting(true); // Disable button immediately
         setError(null);
         setFieldErrors({}); // Reset field errors on new submission
 
@@ -107,6 +111,7 @@ function SettelmentForm() {
     const words = formData.summary.trim().split(/\s+/);
     if (words.length > 100) {
       setSummaryError('Summary cannot exceed 100 words.');
+      setSubmitting(false);
       return; // Stop submission if word limit is exceeded
     }
 
@@ -150,7 +155,9 @@ function SettelmentForm() {
                             "An unknown error occurred";
         setError(errorMessage);
       }
-    }
+    } finally {
+    setSubmitting(false); // Re-enable if needed, or leave it disabled permanently
+  }
 }
 
   return (
@@ -527,12 +534,14 @@ function SettelmentForm() {
           Reset
         </button>
         
-        <button
-          type="submit" 
-               className="inline-flex items-center justify-center rounded-full border border-transparent bg-cyan-300 px-7 py-3 text-center text-base font-medium text-dark shadow-5 hover:bg-cyan-500 disabled:border-gray-3 disabled:bg-gray-3 disabled:text-dark-5 dark:bg-gray-2 dark:shadow-box-dark dark:hover:bg-dark-5"
-        >
-          Submit
-        </button>
+       <button
+       type="submit"
+       disabled={submitting}
+       className={`inline-flex items-center justify-center rounded-full border border-transparent bg-cyan-300 px-7 py-3 text-center text-base font-medium text-dark shadow-5 hover:bg-cyan-500 ${
+        submitting ? "opacity-50 cursor-not-allowed" : ""
+  }`} >
+  {submitting ? "Submitting..." : "Submit"}
+</button>
        
       </div>
         </form>
